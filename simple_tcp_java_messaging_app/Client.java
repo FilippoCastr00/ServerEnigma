@@ -7,7 +7,7 @@ import java.util.Scanner;
 
 // Definizione della classe Client.
 public class Client {
-    private static boolean isEnigmaOn=false;
+    private static boolean isEnigmaOn;
     // Metodo main, punto di ingresso dell'applicazione client.
     public static void main(String[] args) {
         // Controlla se sono stati passati esattamente tre argomenti (IP server, porta,
@@ -51,23 +51,23 @@ public class Client {
             // Ciclo principale per l'invio di messaggi al server.
             while (true) {
                  String message = userInput.nextLine(); // Legge un messaggio da console.
-                 out.println(username + ": " + message);
                 if (message.equalsIgnoreCase("/enigma on")) {
-                    isEnigmaOn = true;                     
+                    isEnigmaOn = true;
+                    System.out.println("modalità enigma attiva");
+                    message = userInput.nextLine();     
                 } 
-                if (isEnigmaOn) {
-                    String prova =messaggio.cifraDecifra(message,true);
-                    out.println(username + ": " + prova);
-                }
                 if(message.equalsIgnoreCase("/enigma off")){
                     isEnigmaOn = false;
-                    out.println(username + ": " + message); // Invia il messaggio al server, preceduto dall'username.
+                    System.out.println("modalità enigma disattivata");
+                    message = userInput.nextLine(); 
                 }
-                if (!isEnigmaOn) {
-                    String prova2 =messaggio.cifraDecifra(message,false);
-                    out.println(username + ": " + prova2);
+                if (isEnigmaOn) {
+                    String messaggioCriptato =messaggio.cifraDecifra(message,true);
+                    out.println(username + ": " + messaggioCriptato);
                 }
-
+                if(!isEnigmaOn){
+                    out.println(username + ": " + message);
+                }
                 if (message.equalsIgnoreCase("exit")) { // Se il messaggio è "exit", interrompe il ciclo.
                     break;
                 }
