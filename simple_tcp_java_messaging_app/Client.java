@@ -1,13 +1,14 @@
+
 // Importazione delle classi necessarie per I/O e networking.
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.Scanner;
 
-
 // Definizione della classe Client.
 public class Client {
     private static boolean isEnigmaOn;
+
     // Metodo main, punto di ingresso dell'applicazione client.
     public static void main(String[] args) {
         // Controlla se sono stati passati esattamente tre argomenti (IP server, porta,
@@ -25,7 +26,7 @@ public class Client {
         String username = args[2]; // Username dell'utente.
         // Tentativo di stabilire una connessione al server e di configurare gli stream
         // di input/output.
-       
+
         try (Socket socket = new Socket(serverIp, port); // Crea un socket per connettersi al server.
                 Scanner userInput = new Scanner(System.in); // Scanner per leggere l'input dell'utente da console.
                 PrintWriter out = new PrintWriter(socket.getOutputStream(), true)) { // PrintWriter per inviare messaggi
@@ -48,31 +49,38 @@ public class Client {
                 }
             });
             serverListener.start(); // Avvia il thread che ascolta i messaggi dal server.
+            String message = "";
             // Ciclo principale per l'invio di messaggi al server.
             while (true) {
-                 String message = userInput.nextLine(); // Legge un messaggio da console.
-                if (message.equalsIgnoreCase("/enigma on")) {
+                try{// gestisce l'eccezione nel caso in cui l'utente non scrive
+                    message = userInput.nextLine(); // Legge un messaggio da console.
+                    if (message.isEmpty())throw new NullPointerException();
+                }catch(NullPointerException e){
+                    System.err.println("devi inserire qualcosa, non può essere nullo ");
+                }
+                if (message.equalsIgnoreCase("/enigma on")) {// metodo che attiva la modalità enigma
                     isEnigmaOn = true;
                     System.out.println("modalità enigma attiva");
-                    message = userInput.nextLine();     
-                } 
-                if(message.equalsIgnoreCase("/enigma off")){
+                    message = userInput.nextLine(); // quando la modalità è attiva si chiede all'utente di scrivere i
+                                                    // messaggi da criptare
+                }
+                if (message.equalsIgnoreCase("/enigma off")) {// metodo che disattiva la modalità enigma
                     isEnigmaOn = false;
                     System.out.println("modalità enigma disattivata");
-                    message = userInput.nextLine(); 
+                    message = userInput.nextLine(); // quando la modalità è attiva si chiede all'utente di scrivere i
+                                                    // messaggi normali
                 }
                 if (isEnigmaOn) {
-                    String messaggioCriptato =messaggio.cifraDecifra(message,true);
+                    String messaggioCriptato = messaggio.cifraDecifra(message, true);
                     out.println(username + ": " + messaggioCriptato);
                 }
-                if(!isEnigmaOn){
+                if (!isEnigmaOn) {
                     out.println(username + ": " + message);
                 }
                 if (message.equalsIgnoreCase("exit")) { // Se il messaggio è "exit", interrompe il ciclo.
                     break;
                 }
             }
-           
 
         } catch (IOException e) { // Cattura eccezioni di I/O.
             e.printStackTrace(); // Stampa lo stack trace dell'eccezione.
