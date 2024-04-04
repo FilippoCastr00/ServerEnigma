@@ -1,6 +1,6 @@
 public class CifrarioDiCesare {
     // Dizionario utilizzato per il cifrario di Cesare
-    private static final String DIZIONARIO = "abcdefghijklmnopqrstuvwxyz";
+    private static final String DIZIONARIO = "abcdefghijklmnopqrstuvwxyz0123456789";
 
     // Metodo per criptare il testo
     public static String cripta(String testo, int shift) {

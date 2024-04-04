@@ -1,12 +1,17 @@
 
 // Importazione delle classi necessarie per I/O e networking.
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.Properties;
 import java.util.Scanner;
 
 // Definizione della classe Client.
 public class Client {
+
+    private static String shift = getPSK("app.properties");
+
     private static boolean isEnigmaOn;
     private static boolean isCesarOn;
 
@@ -83,8 +88,9 @@ public class Client {
                     message = userInput.nextLine(); // quando la modalità è attiva si chiede all'utente di scrivere i
                                                     // messaggi normali
                 }
+                int shiftInteger = Integer.parseInt(shift);
                 if (isCesarOn) {
-                    String messaggioCriptato1 = messaggioCesar.cripta(message, 3);
+                    String messaggioCriptato1 = messaggioCesar.cripta(message, shiftInteger);
                     out.println(username + ": " + messaggioCriptato1);
                 } else if (isEnigmaOn) {
                     String messaggioCriptato = messaggio.cifraDecifra(message, true);
@@ -98,6 +104,21 @@ public class Client {
 
         } catch (IOException e) { // Cattura eccezioni di I/O.
             e.printStackTrace(); // Stampa lo stack trace dell'eccezione.
+        }
+
+    }
+
+    private static String getPSK(String filename) { // Metodo privato per ottenere la chiave condivisa dal file di
+                                                    // configurazione
+        Properties prop = new Properties(); // Crea un nuovo oggetto Properties per gestire le proprietà
+        try (FileInputStream fis = new FileInputStream(filename)) { // Apre un file di input stream per leggere le
+                                                                    // proprietà
+            prop.load(fis); // Carica le proprietà dal file
+            return prop.getProperty("shift"); // Restituisce il valore della chiave condivisa dal file di
+                                              // configurazione
+        } catch (IOException e) { // Gestisce eventuali eccezioni di IO
+            e.printStackTrace(); // Stampa lo stack trace dell'eccezione
+            return null; // Restituisce null in caso di errore
         }
     }
 }
