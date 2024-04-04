@@ -8,6 +8,7 @@ import java.util.Scanner;
 // Definizione della classe Client.
 public class Client {
     private static boolean isEnigmaOn;
+    private static boolean isCesarOn;
 
     // Metodo main, punto di ingresso dell'applicazione client.
     public static void main(String[] args) {
@@ -36,6 +37,7 @@ public class Client {
             // Messaggio che indica la connessione riuscita al server.
             System.out.println("Connected to server. Start typing messages (type 'exit' to quit).");
             Enigma messaggio = new Enigma();
+            CifrarioDiCesare messaggioCesar = new CifrarioDiCesare();
 
             // Creazione e avvio di un nuovo thread per ascoltare i messaggi dal server.
             Thread serverListener = new Thread(() -> {
@@ -52,11 +54,17 @@ public class Client {
             String message = "";
             // Ciclo principale per l'invio di messaggi al server.
             while (true) {
-                try{// gestisce l'eccezione nel caso in cui l'utente non scrive
+                try {// gestisce l'eccezione nel caso in cui l'utente non scrive
                     message = userInput.nextLine(); // Legge un messaggio da console.
-                    if (message.isEmpty())throw new NullPointerException();
-                }catch(NullPointerException e){
+                    if (message.isEmpty())
+                        throw new NullPointerException();
+                } catch (NullPointerException e) {
                     System.err.println("devi inserire qualcosa, non può essere nullo ");
+                }
+                if (message.equalsIgnoreCase("/cesar on")) {
+                    isCesarOn = true;
+                    System.out.println("modalità cesar attiva");
+                    message = userInput.nextLine();
                 }
                 if (message.equalsIgnoreCase("/enigma on")) {// metodo che attiva la modalità enigma
                     isEnigmaOn = true;
@@ -64,20 +72,26 @@ public class Client {
                     message = userInput.nextLine(); // quando la modalità è attiva si chiede all'utente di scrivere i
                                                     // messaggi da criptare
                 }
+                if (message.equalsIgnoreCase("/cesar off")) {
+                    isCesarOn = false;
+                    System.out.println("modalità cesar disattivata");
+                    message = userInput.nextLine();
+                }
                 if (message.equalsIgnoreCase("/enigma off")) {// metodo che disattiva la modalità enigma
                     isEnigmaOn = false;
                     System.out.println("modalità enigma disattivata");
                     message = userInput.nextLine(); // quando la modalità è attiva si chiede all'utente di scrivere i
                                                     // messaggi normali
                 }
-                if (isEnigmaOn) {
+                if (isCesarOn) {
+                    String messaggioCriptato1 = messaggioCesar.cripta(message, 3);
+                    out.println(username + ": " + messaggioCriptato1);
+                } else if (isEnigmaOn) {
                     String messaggioCriptato = messaggio.cifraDecifra(message, true);
                     out.println(username + ": " + messaggioCriptato);
-                }
-                if (!isEnigmaOn) {
+                } else if (!isEnigmaOn && !isEnigmaOn) {
                     out.println(username + ": " + message);
-                }
-                if (message.equalsIgnoreCase("exit")) { // Se il messaggio è "exit", interrompe il ciclo.
+                } else if (message.equalsIgnoreCase("exit")) { // Se il messaggio è "exit", interrompe il ciclo.
                     break;
                 }
             }
