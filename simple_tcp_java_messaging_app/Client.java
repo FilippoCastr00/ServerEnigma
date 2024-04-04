@@ -42,7 +42,8 @@ public class Client {
             // Messaggio che indica la connessione riuscita al server.
             System.out.println("Connected to server. Start typing messages (type 'exit' to quit).");
             Enigma messaggio = new Enigma();
-            CifrarioDiCesare messaggioCesar = new CifrarioDiCesare();
+
+            // CifrarioDiCesare messaggioCesar = new CifrarioDiCesare();
 
             // Creazione e avvio di un nuovo thread per ascoltare i messaggi dal server.
             Thread serverListener = new Thread(() -> {
@@ -90,7 +91,7 @@ public class Client {
                 }
                 int shiftInteger = Integer.parseInt(shift);
                 if (isCesarOn) {
-                    String messaggioCriptato1 = messaggioCesar.cripta(message, shiftInteger);
+                    String messaggioCriptato1 = CifrarioDiCesare.cripta(message, shiftInteger);
                     out.println(username + ": " + messaggioCriptato1);
                 } else if (isEnigmaOn) {
                     String messaggioCriptato = messaggio.cifraDecifra(message, true);
