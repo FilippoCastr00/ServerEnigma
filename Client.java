@@ -9,9 +9,11 @@ import java.util.Scanner;
 
 // Definizione della classe Client.
 public class Client {
-    private static boolean isEnigmaOn=false;
-    private static boolean isAESOn=false;
+    private static boolean isEnigmaOn = false;
+    private static boolean isAESOn = false;
+    private static boolean isCesarOn = false;
     private static String sharedSecret = getPSK("app.properties");
+    private static int shift = getPSK1("app.properties");
 
     // Metodo main, punto di ingresso dell'applicazione client.
     public static void main(String[] args) {
@@ -41,19 +43,24 @@ public class Client {
             System.out.println("Connected to server. Start typing messages (type 'exit' to quit).");
             Enigma messaggio = new Enigma();
             CrittografiaAES cryptoAes = new CrittografiaAES();
+            CifrarioDiCesare messaggioCesar = new CifrarioDiCesare();
 
             // Creazione e avvio di un nuovo thread per ascoltare i messaggi dal server.
             Thread serverListener = new Thread(() -> {
                 try (Scanner in = new Scanner(socket.getInputStream())) { // Scanner per leggere i messaggi in entrata
-                                                                          // dal server.
+                    // dal server.
                     while (in.hasNextLine()) {
                         String message = in.nextLine();
                         try { // Prova a decodificare il messaggio
                             String decryptedMessage = message; // Assume che il messaggio sia già decriptato
                             if (isAESOn) { // Se è attivo l'AES
-                                decryptedMessage = cryptoAes.decrypt(message, sharedSecret); // Decifra il messaggio utilizzando AES
+                                decryptedMessage = cryptoAes.decrypt(message, sharedSecret); // Decifra il messaggio
+                                // utilizzando AES
                             } else if (isEnigmaOn) { // Altrimenti, se è attivo Enigma
-                                decryptedMessage = messaggio.cifraDecifra(message, false); // Decifra il messaggio utilizzando Enigma
+                                decryptedMessage = messaggio.cifraDecifra(message, false); // Decifra il messaggio
+                                // utilizzando Enigma
+                            } else if (isCesarOn) {
+                                decryptedMessage = messaggioCesar.decripta(message, shift);
                             }
                             System.out.println(decryptedMessage); // Stampa il messaggio decodificato
                         } catch (Exception e) { // Gestisce eventuali eccezioni
@@ -68,49 +75,75 @@ public class Client {
             String message = "";
             // Ciclo principale per l'invio di messaggi al server.
             while (true) {
-                try{// gestisce l'eccezione nel caso in cui l'utente non scrive
+                try {// gestisce l'eccezione nel caso in cui l'utente non scrive
                     message = userInput.nextLine(); // Legge un messaggio da console.
-                    if (message.isEmpty())throw new NullPointerException();
-                }catch(NullPointerException e){
+                    if (message.isEmpty())
+                        throw new NullPointerException();
+                } catch (NullPointerException e) {
                     System.err.println("devi inserire qualcosa, non può essere nullo ");
                 }
+                if (message.equalsIgnoreCase("/cesar on")) {
+                    isCesarOn = true;
+                    isAESOn = false;
+                    isEnigmaOn = false;
+                    System.out.println("modalità cesar attiva");
+                    continue;
+                }
+                if (message.equalsIgnoreCase("/cesar off")) {
+                    isCesarOn = false;
+                    isAESOn = false;
+                    isEnigmaOn = false;
+                    System.out.println("modalità cesar disattivata");
+                    continue;
+                }
                 if (message.equalsIgnoreCase("/enigma on")) {// metodo che attiva la modalità enigma
-                    isAESOn=false;
+                    isAESOn = false;
                     isEnigmaOn = true;
+                    isCesarOn = false;
                     System.out.println("modalità enigma attiva");
                     continue; // quando la modalità è attiva si chiede all'utente di scrivere i
-                                                    // messaggi da criptare
+                              // messaggi da criptare
                 }
                 if (message.equalsIgnoreCase("/enigma off")) {// metodo che disattiva la modalità enigma
-                    isAESOn=false;
+                    isAESOn = false;
                     isEnigmaOn = false;
+                    isCesarOn = false;
                     System.out.println("modalità enigma disattivata");
                     continue; // quando la modalità è attiva si chiede all'utente di scrivere i
-                                                    // messaggi normali
+                              // messaggi normali
                 }
-                
+
                 if (message.equalsIgnoreCase("/aes on")) {
-                    isAESOn= true;
-                    isEnigmaOn=false;
+                    isAESOn = true;
+                    isEnigmaOn = false;
+                    isCesarOn = false;
                     System.out.println("modalità aes attiva");
                     continue;
-                       
-                }else if(message.equalsIgnoreCase("/aes off")){
+
+                } else if (message.equalsIgnoreCase("/aes off")) {
                     isAESOn = false;
-                    isEnigmaOn=false;
+                    isEnigmaOn = false;
+                    isCesarOn = false;
                     System.out.println("modalità aes disattivata");
                     continue;
                 }
                 String messageToSend = username + ": " + message;
-                if(isAESOn){
-                    try{
+                if (isAESOn) {
+                    try {
                         messageToSend = cryptoAes.encrypt(messageToSend, sharedSecret);
-                    }catch(Exception e){
+                    } catch (Exception e) {
                         e.printStackTrace();
                     }
                 }
                 if (isEnigmaOn) {
                     messageToSend = messaggio.cifraDecifra(messageToSend, true);
+                }
+                if (isCesarOn) {
+                    try {
+                        messageToSend = messaggioCesar.cripta(messageToSend, shift);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
                 if (message.equalsIgnoreCase("exit")) { // Se il messaggio è "exit", interrompe il ciclo.
                     break;
@@ -122,14 +155,34 @@ public class Client {
             e.printStackTrace(); // Stampa lo stack trace dell'eccezione.
         }
     }
-    private static String getPSK(String filename) { // Metodo privato per ottenere la chiave condivisa dal file di configurazione
+
+    private static String getPSK(String filename) { // Metodo privato per ottenere la chiave condivisa dal file di
+        // configurazione
         Properties prop = new Properties(); // Crea un nuovo oggetto Properties per gestire le proprietà
-        try (FileInputStream fis = new FileInputStream(filename)) { // Apre un file di input stream per leggere le proprietà
+        try (FileInputStream fis = new FileInputStream(filename)) { // Apre un file di input stream per leggere le
+            // proprietà
             prop.load(fis); // Carica le proprietà dal file
-            return prop.getProperty("sharedSecret"); // Restituisce il valore della chiave condivisa dal file di configurazione
+            return prop.getProperty("sharedSecret"); // Restituisce il valore della chiave condivisa dal file di
+            // configurazione
         } catch (IOException e) { // Gestisce eventuali eccezioni di IO
             e.printStackTrace(); // Stampa lo stack trace dell'eccezione
             return null; // Restituisce null in caso di errore
+        }
+    }
+
+    private static int getPSK1(String filename) { // Metodo privato per ottenere la chiave condivisa dal file di
+                                                  // configurazione
+        Properties prop = new Properties(); // Crea un nuovo oggetto Properties per gestire le proprietà
+        try (FileInputStream fis = new FileInputStream(filename)) { // Apre un file di input stream per leggere le
+                                                                    // proprietà
+            prop.load(fis); // Carica le proprietà dal file
+            String temp = prop.getProperty("shift"); // Restituisce il valore della chiave condivisa dal file di
+            // configurazione
+            int tempInt = Integer.parseInt(temp);
+            return tempInt;
+        } catch (IOException e) { // Gestisce eventuali eccezioni di IO
+            e.printStackTrace(); // Stampa lo stack trace dell'eccezione
+            return 0; // Restituisce null in caso di errore
         }
     }
 }
