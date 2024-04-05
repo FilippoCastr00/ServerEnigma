@@ -39,7 +39,7 @@ public class CrittografiaAES {
     }
 
     // Metodo statico per decriptare una stringa criptata con una chiave fornita.
-    public static String decrypt(String encryptedData, String key) throws Exception {
+    public  String decrypt(String encryptedData, String key) throws Exception {
         // Generazione della specifica della chiave crittografica dalla chiave fornita.
         SecretKeySpec keySpec = getKey(key);
         // Creazione dell'istanza del cifratore per l'algoritmo AES.

@@ -9,7 +9,7 @@ import java.util.Scanner;
 
 // Definizione della classe Client.
 public class Client {
-    private static boolean isEnigmaOn;
+    private static boolean isEnigmaOn=false;
     private static boolean isAESOn=false;
     private static String sharedSecret = getPSK("app.properties");
 
@@ -46,8 +46,19 @@ public class Client {
             Thread serverListener = new Thread(() -> {
                 try (Scanner in = new Scanner(socket.getInputStream())) { // Scanner per leggere i messaggi in entrata
                                                                           // dal server.
-                    while (in.hasNextLine()) { // Continua a leggere finché ci sono messaggi.
-                        System.out.println(in.nextLine()); // Stampa i messaggi ricevuti dal server.
+                    while (in.hasNextLine()) {
+                        String message = in.nextLine();
+                        try { // Prova a decodificare il messaggio
+                            String decryptedMessage = message; // Assume che il messaggio sia già decriptato
+                            if (isAESOn) { // Se è attivo l'AES
+                                decryptedMessage = cryptoAes.decrypt(message, sharedSecret); // Decifra il messaggio utilizzando AES
+                            } else if (isEnigmaOn) { // Altrimenti, se è attivo Enigma
+                                decryptedMessage = messaggio.cifraDecifra(message, false); // Decifra il messaggio utilizzando Enigma
+                            }
+                            System.out.println(decryptedMessage); // Stampa il messaggio decodificato
+                        } catch (Exception e) { // Gestisce eventuali eccezioni
+                            System.out.println("Ricevuto messaggio non decriptabile"); // Stampa un messaggio di errore
+                        }
                     }
                 } catch (IOException e) { // Cattura eccezioni di I/O.
                     e.printStackTrace(); // Stampa lo stack trace dell'eccezione.
@@ -67,46 +78,44 @@ public class Client {
                     isAESOn=false;
                     isEnigmaOn = true;
                     System.out.println("modalità enigma attiva");
-                    message = userInput.nextLine(); // quando la modalità è attiva si chiede all'utente di scrivere i
+                    continue; // quando la modalità è attiva si chiede all'utente di scrivere i
                                                     // messaggi da criptare
                 }
                 if (message.equalsIgnoreCase("/enigma off")) {// metodo che disattiva la modalità enigma
                     isAESOn=false;
                     isEnigmaOn = false;
                     System.out.println("modalità enigma disattivata");
-                    message = userInput.nextLine(); // quando la modalità è attiva si chiede all'utente di scrivere i
+                    continue; // quando la modalità è attiva si chiede all'utente di scrivere i
                                                     // messaggi normali
                 }
-                if (isEnigmaOn) {
-                    String messaggioCriptato = messaggio.cifraDecifra(message, true);
-                    out.println(username + ": " + messaggioCriptato);
-                }
+                
                 if (message.equalsIgnoreCase("/aes on")) {
                     isAESOn= true;
                     isEnigmaOn=false;
                     System.out.println("modalità aes attiva");
-                    message = userInput.nextLine();
+                    continue;
                        
                 }else if(message.equalsIgnoreCase("/aes off")){
                     isAESOn = false;
                     isEnigmaOn=false;
                     System.out.println("modalità aes disattivata");
-                    message = userInput.nextLine();
+                    continue;
                 }
+                String messageToSend = username + ": " + message;
                 if(isAESOn){
                     try{
-                        String messaggioAes = cryptoAes.encrypt(message, sharedSecret);
-                        out.println(username + ": " + messaggioAes);
+                        messageToSend = cryptoAes.encrypt(messageToSend, sharedSecret);
                     }catch(Exception e){
                         e.printStackTrace();
                     }
                 }
-                if(!isAESOn && !isEnigmaOn) {
-                    out.println(username + ": " + message);
+                if (isEnigmaOn) {
+                    messageToSend = messaggio.cifraDecifra(messageToSend, true);
                 }
                 if (message.equalsIgnoreCase("exit")) { // Se il messaggio è "exit", interrompe il ciclo.
                     break;
                 }
+                out.println(messageToSend);
             }
 
         } catch (IOException e) { // Cattura eccezioni di I/O.
